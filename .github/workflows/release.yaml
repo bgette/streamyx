@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [16.x]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.CONTROL_REPO_TOKEN }}
+          submodules: recursive
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install widecrypt dependencies
+        run: cd packages/widecrypt && npm ci
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set package name & version
+        run: |
+          test -n $(node -p -e "require('./package.json').name") &&
+          test -n $(node -p -e "require('./package.json').version") &&
+          echo PACKAGE_NAME=$(node -p -e "require('./package.json').name") >> $GITHUB_ENV &&
+          echo PACKAGE_VERSION=$(node -p -e "require('./package.json').version") >> $GITHUB_ENV || exit 1
+
+      - name: Build
+        run: npm run build --if-present
+
+      - name: Compress
+        run: |
+          zip -j ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-windows.zip ./build/${{ env.PACKAGE_NAME }}-windows/${{ env.PACKAGE_NAME }}.exe
+          zip -j ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-macos.zip ./build/${{ env.PACKAGE_NAME }}-macos/${{ env.PACKAGE_NAME }}
+          zip -j ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-linux.zip ./build/${{ env.PACKAGE_NAME }}-linux/${{ env.PACKAGE_NAME }}
+
+      - name: Release
+        uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: '${{ secrets.GITHUB_TOKEN }}'
+          automatic_release_tag: 'v${{ env.PACKAGE_VERSION }}'
+          title: 'v${{ env.PACKAGE_VERSION }}'
+          prerelease: false
+          files: |
+            ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-windows.zip
+            ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-macos.zip
+            ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-linux.zip

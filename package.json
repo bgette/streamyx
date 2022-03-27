@@ -1,0 +1,77 @@
+{
+  "name": "streamyx",
+  "version": "3.0.1",
+  "author": "Vitaliy Gashkov <vitnore@gmail.com>",
+  "description": "command-line video downloader",
+  "license": "Apache-2.0",
+  "keywords": [
+    "cli",
+    "downloader",
+    "nodejs"
+  ],
+  "main": "streamyx.js",
+  "bin": {
+    "streamyx": "streamyx.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vitnore/streamyx.git"
+  },
+  "scripts": {
+    "start": "node streamyx",
+    "build": "npm run build:windows && npm run build:macos && npm run build:linux",
+    "build:windows": "pkg . --targets node16-win-x64 --output ./build/streamyx-windows/streamyx.exe --debug",
+    "build:macos": "pkg . --targets node16-macos-x64 --output ./build/streamyx-macos/streamyx",
+    "build:linux": "pkg . --targets node16-linux-x64 --output ./build/streamyx-linux/streamyx",
+    "clean": "rimraf build/*",
+    "test": "jest",
+    "lint": "eslint \"src/**/*.ts\" --fix",
+    "lint:check": "eslint \"src/**/*.ts\"",
+    "format": "prettier --loglevel warn --write \"**/*.{ts,js,json,yaml}\"",
+    "format:check": "prettier --loglevel warn --check \"**/*.{ts,js,json,yaml}\""
+  },
+  "dependencies": {
+    "dasha": "^2.2.5",
+    "segasync": "^2.0.4",
+    "undici": "^4.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.23",
+    "eslint": "^8.12.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.25.4",
+    "eslint-plugin-prettier": "^4.0.0",
+    "jest": "^27.5.1",
+    "pkg": "^5.5.2",
+    "prettier": "^2.6.1",
+    "typescript": "^4.6.3"
+  },
+  "private": true,
+  "engines": {
+    "node": ">=16",
+    "npm": ">=8"
+  },
+  "pkg": {
+    "assets": [
+      "src/**/*"
+    ],
+    "patches": {
+      "./node_modules/undici/lib/fetch/body.js": [
+        "require('stream/web')",
+        "require('stream').web"
+      ],
+      "./node_modules/undici/lib/core/util.js": [
+        "require('stream/web')",
+        "require('stream').web"
+      ],
+      "./node_modules/undici/lib/fetch/request.js": [
+        "require('stream/web')",
+        "require('stream').web"
+      ],
+      "./node_modules/undici/lib/fetch/index.js": [
+        "require('stream/web')",
+        "require('stream').web"
+      ]
+    }
+  }
+}
