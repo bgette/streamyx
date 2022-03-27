@@ -20,7 +20,7 @@
   "scripts": {
     "start": "node streamyx",
     "build": "npm run build:windows && npm run build:macos && npm run build:linux",
-    "build:windows": "pkg . --targets node16-win-x64 --output ./build/streamyx-windows/streamyx.exe --debug",
+    "build:windows": "pkg . --targets node16-win-x64 --output ./build/streamyx-windows/streamyx.exe",
     "build:macos": "pkg . --targets node16-macos-x64 --output ./build/streamyx-macos/streamyx",
     "build:linux": "pkg . --targets node16-linux-x64 --output ./build/streamyx-linux/streamyx",
     "clean": "rimraf build/*",
