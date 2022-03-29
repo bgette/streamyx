@@ -121,13 +121,13 @@ class Kinopoisk extends Provider {
 
     const drmConfig = {
       server: stream.drmConfig.servers['com.widevine.alpha'],
+      individualizationServer: stream.drmConfig.servers['com.widevine.alpha'],
       headers: {
         ...this.#http.headers,
         'Content-Type': 'application/json',
         Referer: DOMAINS.default,
       },
       params: stream.drmConfig.requestParams,
-      certificate: stream.drmConfig.servers['com.widevine.alpha'],
     };
 
     return { manifest, drmConfig, subtitles };
