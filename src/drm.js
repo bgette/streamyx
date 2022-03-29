@@ -36,29 +36,33 @@ const licenseRequestHandler = async (url, payload, headers, params) => {
   return data;
 };
 
-const getDecryptionKeys = async (psshBase64, drmConfig) => {
-  const { server, certificate, headers, params } = drmConfig;
+const getDecryptionKeys = async (pssh, drmConfig) => {
+  const { server, headers, params } = drmConfig;
 
-  let certificateBase64 = null;
-  if (certificate) {
-    const data = await licenseRequestHandler(certificate, 'CAQ=', headers, params);
-    certificateBase64 = data.toString('base64');
-  }
-
-  const widecrypt = new Widecrypt({ logger });
-  await widecrypt.initialize({ devicesPath: DEVICES_PATH });
-  const sessionId = await widecrypt.createSession({
-    initData: psshBase64,
-    certData: certificateBase64,
+  const widecrypt = new Widecrypt(logger);
+  await widecrypt.init(drmConfig, { devicesPath: DEVICES_PATH });
+  widecrypt.setRequestFilter((request) => {
+    request.body = params
+      ? JSON.stringify({
+          rawLicenseRequestBase64: Buffer.isBuffer(request.body)
+            ? request.body.toString('base64')
+            : request.body,
+          ...params,
+        })
+      : request.body;
+    return request;
   });
-  const licenseRequest = await widecrypt.waitForLicenseRequest(sessionId);
+  widecrypt.setResponseFilter((response) => {
+    if (response.data[0] === /* '{' */ 0x7b) {
+      const dataObject = JSON.parse(response.data.toString('utf8'));
+      response.data = dataObject.license || dataObject.payload || dataObject;
+    }
+    return response;
+  });
 
-  const data = await licenseRequestHandler(server, licenseRequest, headers, params);
-  const licenseBase64 = data.toString('base64');
-
-  await widecrypt.updateSession(sessionId, licenseBase64);
-  const keys = await widecrypt.waitForKeys(sessionId);
-  return keys;
+  const session = await widecrypt.createSession(pssh);
+  await session.waitForKeysChange();
+  return session.contentKeys;
 };
 
 const decryptFile = async (key, kid, input, output, cleanup) => {
