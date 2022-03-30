@@ -33,7 +33,7 @@
   "dependencies": {
     "dasha": "^2.2.5",
     "segasync": "^2.0.4",
-    "undici": "^4.16.0"
+    "undici": "^5.0.0"
   },
   "devDependencies": {
     "@types/node": "^17.0.23",
