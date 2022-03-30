@@ -2,7 +2,7 @@
   "name": "streamyx",
   "version": "3.0.1",
   "author": "Vitaliy Gashkov <vitnore@gmail.com>",
-  "description": "command-line video downloader",
+  "description": "Command-line video downloader",
   "license": "Apache-2.0",
   "keywords": [
     "cli",
@@ -16,6 +16,10 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/vitnore/streamyx.git"
+  },
+  "funding": {
+    "type": "individual",
+    "url": "https://boosty.to/vitnore"
   },
   "scripts": {
     "start": "node streamyx",
