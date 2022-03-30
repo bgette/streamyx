@@ -15,29 +15,8 @@ const MP4DECRYPT_PATH = join(process.cwd(), 'bin', MP4DECRYPT_NAME);
 const http = new Http();
 const files = new Files();
 
-const licenseRequestHandler = async (url, payload, headers, params) => {
-  const options = {
-    method: HTTP_METHOD.POST,
-    body: params
-      ? JSON.stringify({
-          rawLicenseRequestBase64: Buffer.isBuffer(payload) ? payload.toString('base64') : payload,
-          ...params,
-        })
-      : payload,
-    headers,
-    responseType: 'buffer',
-  };
-  const response = await http.request(url, options);
-  const data = response.body;
-  if (data[0] === /* '{' */ 0x7b) {
-    const dataObject = JSON.parse(data.toString('utf8'));
-    return dataObject.license || dataObject.payload || dataObject;
-  }
-  return data;
-};
-
 const getDecryptionKeys = async (pssh, drmConfig) => {
-  const { server, headers, params } = drmConfig;
+  const { params } = drmConfig;
 
   const widecrypt = new Widecrypt(logger);
   await widecrypt.init(drmConfig, { devicesPath: DEVICES_PATH });
