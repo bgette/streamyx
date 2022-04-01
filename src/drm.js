@@ -6,13 +6,11 @@ const childProcess = require('child_process');
 const { Widecrypt } = require('../packages/widecrypt');
 const { logger } = require('./logger');
 const { Files } = require('./files');
-const { Http, HTTP_METHOD } = require('./network');
 
 const DEVICES_PATH = join(process.cwd(), 'drm', 'devices');
 const MP4DECRYPT_NAME = 'mp4decrypt' + (platform === 'win32' ? '.exe' : '');
 const MP4DECRYPT_PATH = join(process.cwd(), 'bin', MP4DECRYPT_NAME);
 
-const http = new Http();
 const files = new Files();
 
 const getDecryptionKeys = async (pssh, drmConfig) => {
