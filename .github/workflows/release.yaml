@@ -1,12 +1,22 @@
 name: Release
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      draft:
+        description: 'Draft'
+        required: false
+        default: true
+        type: boolean
+      prerelease:
+        description: 'Pre-release'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
-  build:
+  setup:
+    name: Setup
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -23,37 +33,36 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Install widecrypt dependencies
+      - name: Install submodule dependencies
         run: cd packages/widecrypt && npm ci
 
-      - name: Install dependencies
+      - name: Install app dependencies
         run: npm ci
 
-      - name: Set package name & version
+      - name: Get package name and version
         run: |
           test -n $(node -p -e "require('./package.json').name") &&
           test -n $(node -p -e "require('./package.json').version") &&
           echo PACKAGE_NAME=$(node -p -e "require('./package.json').name") >> $GITHUB_ENV &&
           echo PACKAGE_VERSION=$(node -p -e "require('./package.json').version") >> $GITHUB_ENV || exit 1
 
-      - name: Build
+      - name: Generating executables
         run: npm run build --if-present
 
-      - name: Compress
+      - name: Compressing builds
         run: |
-          zip -j ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-windows.zip ./build/${{ env.PACKAGE_NAME }}-windows/${{ env.PACKAGE_NAME }}.exe
-          zip -j ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-macos.zip ./build/${{ env.PACKAGE_NAME }}-macos/${{ env.PACKAGE_NAME }}
           zip -j ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-linux.zip ./build/${{ env.PACKAGE_NAME }}-linux/${{ env.PACKAGE_NAME }}
+          zip -j ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-macos.zip ./build/${{ env.PACKAGE_NAME }}-macos/${{ env.PACKAGE_NAME }}
+          zip -j ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-windows.zip ./build/${{ env.PACKAGE_NAME }}-windows/${{ env.PACKAGE_NAME }}.exe
 
-      - name: Create release
-        uses: ncipollo/release-action@latest
+      - name: Create release draft
+        uses: ncipollo/release-action@v1
         with:
-          artifacts: '${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-windows.zip,
+          artifacts: '${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-linux.zip,
             ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-macos.zip,
-            ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-linux.zip'
+            ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-windows.zip'
           tag: 'v${{ env.PACKAGE_VERSION }}'
-          name: 'v${{ env.PACKAGE_VERSION }}'
-          body: '<insert release notes here>'
           token: ${{ secrets.GITHUB_TOKEN }}
-          draft: true
-          prerelease: true
+          draft: ${{ github.event.inputs.draft }}
+          prerelease: ${{ github.event.inputs.prerelease }}
+          generateReleaseNotes: true
