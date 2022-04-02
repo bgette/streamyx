@@ -1,4 +1,4 @@
-const { Args } = require('../../src/args');
+const { Args } = require('../src/args');
 
 test('args', () => {
   const link = 'https://www.wakanim.tv/ru/v2/catalogue/episode/34641/';
