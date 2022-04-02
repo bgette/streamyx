@@ -49,7 +49,6 @@ class Crunchyroll extends Provider {
     const object = await this.#api.getObject(episodeId);
     const episode = object.items[0];
     const rawMetadata = episode.episode_metadata;
-    const duration = Math.ceil(rawMetadata.duration_ms / 1000);
 
     if (!episode.playback && rawMetadata.is_premium_only) {
       logger.error(`Premium subscription required`);
@@ -117,19 +116,27 @@ class Crunchyroll extends Provider {
       },
     };
 
-    return {
+    const config = {
       provider: 'CR',
-      show: { title: this.sanitizeString(rawMetadata.series_title) },
-      season: { number: rawMetadata.season_number },
-      episode: {
-        number: rawMetadata.episode_number,
-        title: this.sanitizeString(episode.title),
-      },
       manifest,
       subtitles,
       drmConfig,
       audioType,
     };
+
+    const isMovie = !rawMetadata.episode_number;
+    if (isMovie) {
+      config.movie = { title: this.sanitizeString(rawMetadata.series_title) };
+    } else {
+      config.show = { title: this.sanitizeString(rawMetadata.series_title) };
+      config.season = { number: rawMetadata.season_number };
+      config.episode = {
+        number: rawMetadata.episode_number,
+        title: this.sanitizeString(episode.title),
+      };
+    }
+
+    return config;
   }
 
   sanitizeString(value) {
