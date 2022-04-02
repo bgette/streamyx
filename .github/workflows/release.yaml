@@ -46,7 +46,7 @@ jobs:
           zip -j ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-linux.zip ./build/${{ env.PACKAGE_NAME }}-linux/${{ env.PACKAGE_NAME }}
 
       - name: Create release
-        uses: ncipollo/release-action@latest
+        uses: ncipollo/release-action@v1
         with:
           artifacts: '${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-windows.zip,
             ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-macos.zip,
