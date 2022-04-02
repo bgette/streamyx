@@ -45,14 +45,15 @@ jobs:
           zip -j ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-macos.zip ./build/${{ env.PACKAGE_NAME }}-macos/${{ env.PACKAGE_NAME }}
           zip -j ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-linux.zip ./build/${{ env.PACKAGE_NAME }}-linux/${{ env.PACKAGE_NAME }}
 
-      - name: Release
-        uses: marvinpinto/action-automatic-releases@latest
+      - name: Create release
+        uses: ncipollo/release-action@latest
         with:
-          repo_token: '${{ secrets.GITHUB_TOKEN }}'
-          automatic_release_tag: 'v${{ env.PACKAGE_VERSION }}'
-          title: 'v${{ env.PACKAGE_VERSION }}'
-          prerelease: false
-          files: |
-            ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-windows.zip
-            ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-macos.zip
-            ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-linux.zip
+          artifacts: '${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-windows.zip,
+            ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-macos.zip,
+            ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-linux.zip'
+          tag: 'v${{ env.PACKAGE_VERSION }}'
+          name: 'v${{ env.PACKAGE_VERSION }}'
+          body: '<insert release notes here>'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          draft: true
+          prerelease: true
