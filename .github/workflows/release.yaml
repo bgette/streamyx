@@ -1,9 +1,18 @@
 name: Release
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      draft:
+        description: 'Draft'
+        required: false
+        default: true
+        type: boolean
+      prerelease:
+        description: 'Pre-release'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   setup:
@@ -54,5 +63,6 @@ jobs:
             ${{ env.PACKAGE_NAME }}-${{ env.PACKAGE_VERSION }}-windows.zip'
           tag: 'v${{ env.PACKAGE_VERSION }}'
           token: ${{ secrets.GITHUB_TOKEN }}
-          draft: true
+          draft: ${{ github.event.inputs.draft }}
+          prerelease: ${{ github.event.inputs.prerelease }}
           generateReleaseNotes: true
