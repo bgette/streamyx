@@ -6,59 +6,40 @@ const childProcess = require('child_process');
 const { Widecrypt } = require('../packages/widecrypt');
 const { logger } = require('./logger');
 const { Files } = require('./files');
-const { Http, HTTP_METHOD } = require('./network');
 
 const DEVICES_PATH = join(process.cwd(), 'drm', 'devices');
 const MP4DECRYPT_NAME = 'mp4decrypt' + (platform === 'win32' ? '.exe' : '');
 const MP4DECRYPT_PATH = join(process.cwd(), 'bin', MP4DECRYPT_NAME);
 
-const http = new Http();
 const files = new Files();
 
-const licenseRequestHandler = async (url, payload, headers, params) => {
-  const options = {
-    method: HTTP_METHOD.POST,
-    body: params
+const getDecryptionKeys = async (pssh, drmConfig) => {
+  const { params } = drmConfig;
+
+  const widecrypt = new Widecrypt(logger);
+  await widecrypt.init(drmConfig, { devicesPath: DEVICES_PATH });
+  widecrypt.setRequestFilter((request) => {
+    request.body = params
       ? JSON.stringify({
-          rawLicenseRequestBase64: Buffer.isBuffer(payload) ? payload.toString('base64') : payload,
+          rawLicenseRequestBase64: Buffer.isBuffer(request.body)
+            ? request.body.toString('base64')
+            : request.body,
           ...params,
         })
-      : payload,
-    headers,
-    responseType: 'buffer',
-  };
-  const response = await http.request(url, options);
-  const data = response.body;
-  if (data[0] === /* '{' */ 0x7b) {
-    const dataObject = JSON.parse(data.toString('utf8'));
-    return dataObject.license || dataObject.payload || dataObject;
-  }
-  return data;
-};
-
-const getDecryptionKeys = async (psshBase64, drmConfig) => {
-  const { server, certificate, headers, params } = drmConfig;
-
-  let certificateBase64 = null;
-  if (certificate) {
-    const data = await licenseRequestHandler(certificate, 'CAQ=', headers, params);
-    certificateBase64 = data.toString('base64');
-  }
-
-  const widecrypt = new Widecrypt({ logger });
-  await widecrypt.initialize({ devicesPath: DEVICES_PATH });
-  const sessionId = await widecrypt.createSession({
-    initData: psshBase64,
-    certData: certificateBase64,
+      : request.body;
+    return request;
   });
-  const licenseRequest = await widecrypt.waitForLicenseRequest(sessionId);
+  widecrypt.setResponseFilter((response) => {
+    if (response.data[0] === /* '{' */ 0x7b) {
+      const dataObject = JSON.parse(response.data.toString('utf8'));
+      response.data = dataObject.license || dataObject.payload || dataObject;
+    }
+    return response;
+  });
 
-  const data = await licenseRequestHandler(server, licenseRequest, headers, params);
-  const licenseBase64 = data.toString('base64');
-
-  await widecrypt.updateSession(sessionId, licenseBase64);
-  const keys = await widecrypt.waitForKeys(sessionId);
-  return keys;
+  const session = await widecrypt.createSession(pssh);
+  await session.waitForKeysChange();
+  return session.contentKeys;
 };
 
 const decryptFile = async (key, kid, input, output, cleanup) => {

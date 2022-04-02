@@ -27,19 +27,19 @@ class Downloader {
     const tracks = this.getTracks(manifest);
     this.setWorkDir();
     this.outputInfo(tracks);
-    await this.download(tracks);
-    await this.#downloadSubtitles();
 
-    if (this.#args.skipAudio && this.#args.skipVideo) return;
+    await this.#downloadSubtitles();
+    await this.download(tracks);
 
     logger.info(`Starting decryption`);
     const pssh = manifest.getPssh();
     const { drmConfig } = this.#config;
     const keys = await getDecryptionKeys(pssh, drmConfig);
+    const hasDecryptionKeys = keys.some((key) => !!key.key);
     const decryptQueue = [];
     for (let i = 0; i < tracks.length; i++) {
       const track = tracks[i];
-      if (track.type === 'text') continue;
+      if (track.type === 'text' || !hasDecryptionKeys) continue;
       const key = keys[0].key;
       const kid = keys[0].kid;
       const input = this.getFilepath(this.getTrackFilename(track.type, track.id, 'enc'));
