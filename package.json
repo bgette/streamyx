@@ -1,6 +1,6 @@
 {
   "name": "streamyx",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "author": "Vitaliy Gashkov <vitnore@gmail.com>",
   "description": "Command-line video downloader",
   "license": "Apache-2.0",
